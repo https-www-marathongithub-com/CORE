@@ -403,6 +403,21 @@ module Pod
       dependencies(platform) + subspec_dependencies(platform)
     end
 
+    # @param  [Pod::Dependency] dependency
+    #
+    # @param  [Symbol, String] configuration
+    #
+    # @return [Bool]
+    #
+    def dependency_whitelisted_for_configuration?(dependency, configuration)
+      inherited = -> { root? ? true : parent.dependency_whitelisted_for_configuration?(dependency, configuration) }
+
+      return inherited[] unless configuration_whitelist = attributes_hash['configuration_pod_whitelist']
+      return inherited[] unless whitelist_for_pod = configuration_whitelist[dependency.name]
+
+      whitelist_for_pod.include?(configuration.to_s)
+    end
+
     # Returns a consumer to access the multi-platform attributes.
     #
     # @param  [String, Symbol, Platform] platform

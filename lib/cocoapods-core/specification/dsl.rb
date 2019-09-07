@@ -676,6 +676,11 @@ module Pod
             end
           end
         end
+
+        options = version_requirements.last.is_a?(Hash) ? version_requirements.pop.dup : {}
+        whitelist = options.delete(:configurations)
+        raise Informative, "Unsupported options: #{options}" unless options.empty?
+
         unless version_requirements.all? { |req| req.is_a?(String) }
           version_requirements.each do |requirement|
             if requirement.is_a?(Hash)
@@ -694,6 +699,15 @@ module Pod
 
         attributes_hash['dependencies'] ||= {}
         attributes_hash['dependencies'][name] = version_requirements
+
+        if whitelist
+          whitelist.map!(&:to_s)
+          if (extras = whitelist - %w(debug release)) && !extras.empty?
+            raise Informative, "Only debug & release are allowed under configurations for dependency on #{name}, given #{extras.inspect}"
+          end
+          attributes_hash['configuration_pod_whitelist'] ||= {}
+          attributes_hash['configuration_pod_whitelist'][name] = whitelist
+        end
       end
 
       def dependency=(args)
